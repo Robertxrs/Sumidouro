@@ -1,13 +1,26 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const viewport: Viewport = {
+  themeColor: '#0f172a',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata: Metadata = {
   title: 'Sumidouro',
   description: 'Seu segundo cérebro',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Sumidouro',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
