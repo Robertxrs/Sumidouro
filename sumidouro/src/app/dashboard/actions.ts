@@ -2,7 +2,7 @@
 import { prisma } from '@/lib/prisma'
 
 export async function getDashboardSummary() {
-  const pendingTasks = await prisma.task.count({ where: { isCompleted: false } })
+  const pendingTasks = await prisma.task.count({ where: { isCompleted: false, isHabit: false } })
   
   const transactions = await prisma.transaction.findMany()
   let balance = 0

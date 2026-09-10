@@ -151,7 +151,7 @@ export default function TreinoPage() {
   const progressPercent = (currentExIndex / exercises.length) * 100
 
   return (
-    <div className="h-screen w-full flex flex-col bg-slate-900 text-slate-50 overflow-hidden font-sans">
+    <div className="h-[calc(100vh-5rem)] w-full flex flex-col bg-slate-900 text-slate-50 overflow-hidden font-sans">
       <header className="bg-slate-800 p-4 shadow-md flex justify-between items-center z-10">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🔥</span>
@@ -160,7 +160,7 @@ export default function TreinoPage() {
         <div className="text-sm font-semibold text-slate-400">Rotina Ativa</div>
       </header>
 
-      <main className="flex-1 flex flex-col w-full max-w-md mx-auto relative overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full max-w-md mx-auto relative overflow-hidden h-[calc(100vh-5rem)]">
         {/* TELA INICIAL */}
         {phase === 'home' && (
           <div className="flex flex-col flex-1 p-6 space-y-6">

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getDashboardSummary } from './actions'
 import { CheckSquare, Wallet, Activity, ArrowRight, Flame } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Dashboard() {
   const summary = await getDashboardSummary()
   const hoje = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(new Date())
