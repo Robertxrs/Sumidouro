@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model TaskList {
+  id    String @id @default(cuid())
+  name  String
+  color String
+  tasks Task[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  isCompleted Boolean   @default(false)
+  isHabit     Boolean   @default(false)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  parentId    String?
+  parent      Task?     @relation("SubTasks", fields: [parentId], references: [id])
+  subtasks    Task[]    @relation("SubTasks")
+  listId      String?
+  list        TaskList? @relation(fields: [listId], references: [id])
+}
+
+
+model NoteGroup {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("bg-red-500")
+  notes     Note[]
+  createdAt DateTime @default(now())
+}
+
+model Note {
+  id        String     @id @default(cuid())
+  title     String
+  content   String?
+  groupId   String?
+  group     NoteGroup? @relation(fields: [groupId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  color        String        // Ex: "bg-blue-500"
+  type         String        // "INCOME" ou "EXPENSE"
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  title       String
+  amount      Float
+  type        String    // "INCOME" ou "EXPENSE"
+  date        DateTime  @default(now())
+  isRecurring Boolean   @default(false)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+
