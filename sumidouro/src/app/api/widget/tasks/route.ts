@@ -6,28 +6,26 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const tasks = await prisma.task.findMany({
-      where: {
-        isCompleted: false,
-        isHabit: false
-      },
-      select: {
-        id: true,
-        title: true,
-      },
-      orderBy: {
-        createdAt: 'asc'
-      },
-      take: 5 // Limita às 5 tarefas mais antigas/urgentes
+      where: { isCompleted: false, isHabit: false },
+      select: { title: true },
+      orderBy: { createdAt: 'asc' },
+      take: 5
     });
 
-    return NextResponse.json(tasks, {
+    const textOutput = tasks.length > 0
+      ? tasks.map(t => `• ${t.title}`).join('\n')
+      : 'Tudo limpo por aqui! ✨';
+
+    return new NextResponse(textOutput, {
       status: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*', // Permite que o app de widget do celular acesse
-        'Cache-Control': 'no-store, max-age=0'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store, max-age=0',
+        'Content-Type': 'text/plain; charset=utf-8'
       }
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao buscar tarefas' }, { status: 500 });
+    return new NextResponse('Erro ao buscar tarefas', { status: 500 });
   }
 }
+
