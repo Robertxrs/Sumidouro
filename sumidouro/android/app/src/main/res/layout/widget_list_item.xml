@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_item_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- Conteúdo principal do item (Checkbox + Título + Botão Excluir) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <!-- Círculo vazio "O" (simulando checkbox / alternar conclusão) -->
+        <ImageView
+            android:id="@+id/widget_item_checkbox"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:background="@drawable/circle_outline"
+            android:contentDescription="@null" />
+
+        <!-- Título da tarefa (clique para abrir/editar no app) -->
+        <TextView
+            android:id="@+id/widget_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Título da Tarefa"
+            android:textColor="#F8FAFC"
+            android:textSize="14sp" />
+
+        <!-- Botão Excluir (✕) -->
+        <TextView
+            android:id="@+id/widget_item_delete"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#EF4444"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:padding="2dp" />
+    </LinearLayout>
+
+    <!-- Linha divisória horizontal (linha pautada do caderno) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#2A3142"
+        android:contentDescription="@null" />
+</LinearLayout>
