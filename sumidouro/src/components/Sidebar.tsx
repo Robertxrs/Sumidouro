@@ -1,13 +1,14 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CheckSquare, StickyNote, Activity, Wallet } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, StickyNote, Activity, Wallet, Clock } from 'lucide-react'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const navItems = [
     { name: 'Painel', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Tarefas', href: '/', icon: CheckSquare },
+    { name: 'Rotina', href: '/rotina', icon: Clock },
     { name: 'Notas', href: '/notes', icon: StickyNote },
     { name: 'Treino', href: '/treino', icon: Activity },
     { name: 'Finanças', href: '/finance', icon: Wallet },

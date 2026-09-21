@@ -1,5 +1,6 @@
 package com.robert.sumidouro;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import com.getcapacitor.BridgeActivity;
@@ -15,21 +16,46 @@ public class MainActivity extends BridgeActivity {
             this.bridge.getWebView().addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public void refreshWidget() {
-                    SumidouroWidget.Companion.refreshWidgetData(MainActivity.this);
+                    SumidouroWidget.refreshWidgetData(MainActivity.this);
                 }
             }, "WidgetBridge");
+        }
+
+        handleIntentNavigation(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntentNavigation(intent);
+    }
+
+    private void handleIntentNavigation(Intent intent) {
+        if (intent == null) return;
+        boolean abrirRotina = intent.getBooleanExtra("abrir_rotina", false);
+        String route = intent.getStringExtra("route");
+
+        if (abrirRotina || "/rotina".equals(route)) {
+            if (this.bridge != null && this.bridge.getWebView() != null) {
+                this.bridge.getWebView().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        bridge.getWebView().evaluateJavascript("window.location.href = '/rotina';", null);
+                    }
+                });
+            }
         }
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
-        SumidouroWidget.Companion.refreshWidgetData(this);
+        SumidouroWidget.refreshWidgetData(this);
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
-        SumidouroWidget.Companion.refreshWidgetData(this);
+        SumidouroWidget.refreshWidgetData(this);
     }
 }
