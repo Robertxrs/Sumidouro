@@ -41,15 +41,41 @@ export async function getFinanceData() {
   return { transactions, categories, currentBalance, monthlyIncome, monthlyExpense, projectedBalance }
 }
 
-export async function addTransaction(data: { title: string, amount: number, type: string, isRecurring: boolean, categoryId?: string }) {
+export async function addTransaction(data: { title: string, amount: number, type: string, isRecurring: boolean, categoryId?: string, date?: Date }) {
   await prisma.transaction.create({
     data: {
       title: data.title,
       amount: data.amount,
       type: data.type,
       isRecurring: data.isRecurring,
-      categoryId: data.categoryId || null
+      categoryId: data.categoryId || null,
+      date: data.date || new Date()
     }
   })
   revalidatePath('/finance')
+  revalidatePath('/dashboard')
+}
+
+export async function updateTransaction(id: string, data: { title: string, amount: number, type: string, isRecurring: boolean, categoryId?: string, date?: Date }) {
+  await prisma.transaction.update({
+    where: { id },
+    data: {
+      title: data.title,
+      amount: data.amount,
+      type: data.type,
+      isRecurring: data.isRecurring,
+      categoryId: data.categoryId || null,
+      ...(data.date ? { date: data.date } : {})
+    }
+  })
+  revalidatePath('/finance')
+  revalidatePath('/dashboard')
+}
+
+export async function deleteTransaction(id: string) {
+  await prisma.transaction.delete({
+    where: { id }
+  })
+  revalidatePath('/finance')
+  revalidatePath('/dashboard')
 }

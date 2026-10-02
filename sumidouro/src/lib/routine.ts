@@ -153,12 +153,35 @@ export function getBlockProgress(
   return Math.min(100, Math.max(0, Math.floor((elapsed / duration) * 100)))
 }
 
+export function getCustomRoutineBlocks(mode: RoutineMode): RoutineBlock[] {
+  if (typeof window === 'undefined') return getRoutineBlocks(mode)
+  try {
+    const key = mode === 'DAY_OFF' ? 'sumidouro_routine_dayoff' : 'sumidouro_routine_workday'
+    const saved = localStorage.getItem(key)
+    if (saved) return JSON.parse(saved)
+  } catch (e) {
+    console.error(e)
+  }
+  return getRoutineBlocks(mode)
+}
+
+export function saveCustomRoutineBlocks(mode: RoutineMode, blocks: RoutineBlock[]) {
+  if (typeof window === 'undefined') return
+  try {
+    const key = mode === 'DAY_OFF' ? 'sumidouro_routine_dayoff' : 'sumidouro_routine_workday'
+    localStorage.setItem(key, JSON.stringify(blocks))
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 export function getCurrentAndNextBlock(
   date = new Date(),
-  customMode?: RoutineMode
+  customMode?: RoutineMode,
+  overrideBlocks?: RoutineBlock[]
 ) {
   const mode = customMode || getCurrentRoutineMode(date)
-  const blocks = getRoutineBlocks(mode)
+  const blocks = overrideBlocks || (typeof window !== 'undefined' ? getCustomRoutineBlocks(mode) : getRoutineBlocks(mode))
 
   const currentMinutes = date.getHours() * 60 + date.getMinutes()
 

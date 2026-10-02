@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#020617',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Sumidouro',
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className={`${inter.className} bg-slate-50 text-slate-900`}>
+    <html lang="pt-BR" className="dark">
+      <body className={`${inter.className} bg-slate-950 text-slate-100 antialiased`}>
         <Sidebar />
-        <div className="md:pl-64 pb-16 md:pb-0 min-h-screen">
+        <div className="md:pl-64 pb-16 md:pb-0 min-h-screen bg-slate-950">
           {children}
         </div>
       </body>

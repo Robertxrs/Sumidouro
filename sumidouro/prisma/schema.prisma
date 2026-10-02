@@ -8,34 +8,52 @@ generator client {
 }
 
 model TaskList {
-  id    String @id @default(cuid())
-  name  String
-  color String
-  tasks Task[]
+  id        String        @id @default(cuid())
+  name      String
+  color     String
+  tasks     Task[]
+  sections  TaskSection[]
+  createdAt DateTime      @default(now())
+}
+
+model TaskSection {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  listId    String
+  list      TaskList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  createdAt DateTime @default(now())
 }
 
 model Task {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
-  isCompleted Boolean   @default(false)
-  isHabit     Boolean   @default(false)
+  description String?
+  isCompleted Boolean      @default(false)
+  isHabit     Boolean      @default(false)
+  priority    String       @default("P4") // "P1" | "P2" | "P3" | "P4"
+  order       Int          @default(0)
   dueDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   parentId    String?
-  parent      Task?     @relation("SubTasks", fields: [parentId], references: [id])
-  subtasks    Task[]    @relation("SubTasks")
+  parent      Task?        @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks    Task[]       @relation("SubTasks")
   listId      String?
-  list        TaskList? @relation(fields: [listId], references: [id])
+  list        TaskList?    @relation(fields: [listId], references: [id], onDelete: SetNull)
+  sectionId   String?
+  section     TaskSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 }
 
 
 model NoteGroup {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
-  color     String   @default("bg-red-500")
+  color     String        @default("bg-red-500")
   notes     Note[]
-  createdAt DateTime @default(now())
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
 }
 
 model Note {
@@ -43,9 +61,18 @@ model Note {
   title     String
   content   String?
   groupId   String?
-  group     NoteGroup? @relation(fields: [groupId], references: [id])
+  group     NoteGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+}
+
+model ChatMessage {
+  id        String    @id @default(cuid())
+  role      String    // "user" | "assistant"
+  content   String
+  groupId   String
+  group     NoteGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
 }
 
 model Category {

@@ -16,7 +16,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-slate-300 h-screen fixed top-0 left-0 z-50">
+      <aside className="hidden md:flex flex-col w-64 bg-slate-950 text-slate-300 h-screen fixed top-0 left-0 z-50 border-r border-slate-800/80">
         <div className="p-6 text-xl font-bold text-white flex items-center gap-2">
           <span className="text-2xl">🌀</span> Sumidouro
         </div>
@@ -24,7 +24,7 @@ export default function Sidebar() {
           {navItems.map(item => {
             const isActive = pathname === item.href
             return (
-              <Link key={item.name} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-emerald-500 text-slate-900 font-bold' : 'hover:bg-slate-800 hover:text-white'}`}>
+              <Link key={item.name} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/10' : 'hover:bg-slate-900 hover:text-white text-slate-400'}`}>
                 <item.icon className="w-5 h-5" />
                 {item.name}
               </Link>
@@ -33,11 +33,11 @@ export default function Sidebar() {
         </nav>
       </aside>
 
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-slate-900 text-slate-300 flex justify-around items-center h-16 z-50 border-t border-slate-800 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-slate-950 text-slate-300 flex justify-around items-center h-16 z-50 border-t border-slate-800/80 pb-safe">
         {navItems.map(item => {
           const isActive = pathname === item.href
           return (
-            <Link key={item.name} href={item.href} className={`flex flex-col items-center p-2 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`}>
+            <Link key={item.name} href={item.href} className={`flex flex-col items-center p-2 ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'}`}>
               <item.icon className="w-6 h-6" />
               <span className="text-[10px] mt-1">{item.name}</span>
             </Link>
