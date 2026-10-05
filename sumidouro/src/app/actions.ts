@@ -37,17 +37,27 @@ export async function deleteTaskList(id: string) {
   revalidatePath('/')
 }
 
-export async function getSections(listId: string) {
+export async function getSections(listId?: string | null) {
   return await prisma.taskSection.findMany({
-    where: { listId },
+    where: { listId: listId ? listId : null },
     orderBy: { order: 'asc' }
   })
 }
 
-export async function createSection(name: string, listId: string) {
+export async function createSection(name: string, listId?: string | null) {
   if (!name.trim()) return
   const section = await prisma.taskSection.create({
-    data: { name: name.trim(), listId }
+    data: { name: name.trim(), listId: listId ? listId : null }
+  })
+  revalidatePath('/')
+  return section
+}
+
+export async function updateSection(id: string, name: string) {
+  if (!name.trim()) return
+  const section = await prisma.taskSection.update({
+    where: { id },
+    data: { name: name.trim() }
   })
   revalidatePath('/')
   return section
@@ -56,6 +66,7 @@ export async function createSection(name: string, listId: string) {
 export async function deleteSection(id: string) {
   await prisma.taskSection.delete({ where: { id } })
   revalidatePath('/')
+  return { success: true }
 }
 
 export async function getTasks() {
@@ -78,7 +89,7 @@ export async function createTask(data: {
   description?: string
   priority?: string
   isHabit?: boolean
-  dueDate?: Date | null
+  dueDate?: Date | string | null
   listId?: string | null
   sectionId?: string | null
   parentId?: string | null
@@ -91,7 +102,7 @@ export async function createTask(data: {
       description: data.description || null,
       priority: data.priority || 'P4',
       isHabit: data.isHabit || false,
-      dueDate: data.dueDate || null,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
       listId: data.listId || null,
       sectionId: data.sectionId || null,
       parentId: data.parentId || null
@@ -109,16 +120,32 @@ export async function updateTask(
     description?: string | null
     priority?: string
     isHabit?: boolean
-    dueDate?: Date | null
+    dueDate?: Date | string | null
     listId?: string | null
     sectionId?: string | null
     isCompleted?: boolean
     order?: number
   }
 ) {
+  const updateData: any = { ...data }
+  if (data.dueDate !== undefined) {
+    updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null
+  }
+
   const updated = await prisma.task.update({
     where: { id },
-    data
+    data: updateData
+  })
+  revalidatePath('/')
+  return updated
+}
+
+export async function setTaskDueDate(id: string, dueDate: Date | string | null) {
+  const updated = await prisma.task.update({
+    where: { id },
+    data: {
+      dueDate: dueDate ? new Date(dueDate) : null
+    }
   })
   revalidatePath('/')
   return updated

@@ -17,13 +17,13 @@ model TaskList {
 }
 
 model TaskSection {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  order     Int      @default(0)
-  listId    String
-  list      TaskList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  order     Int       @default(0)
+  listId    String?
+  list      TaskList? @relation(fields: [listId], references: [id], onDelete: Cascade)
   tasks     Task[]
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model Task {
@@ -57,13 +57,15 @@ model NoteGroup {
 }
 
 model Note {
-  id        String     @id @default(cuid())
-  title     String
-  content   String?
-  groupId   String?
-  group     NoteGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id               String     @id @default(cuid())
+  title            String
+  content          String?
+  imageUrl         String?
+  imageDescription String?
+  groupId          String?
+  group            NoteGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }
 
 model ChatMessage {
@@ -84,15 +86,17 @@ model Category {
 }
 
 model Transaction {
-  id          String    @id @default(cuid())
-  title       String
-  amount      Float
-  type        String    // "INCOME" ou "EXPENSE"
-  date        DateTime  @default(now())
-  isRecurring Boolean   @default(false)
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  title         String
+  amount        Float
+  type          String    // "INCOME" ou "EXPENSE"
+  date          DateTime  @default(now())
+  isRecurring   Boolean   @default(false)
+  isCompleted   Boolean   @default(false)
+  lastPaidMonth String?   // Ex: "2026-10" para recorrentes
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime  @default(now())
 }
 
 

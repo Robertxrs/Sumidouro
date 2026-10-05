@@ -171,38 +171,11 @@ export default function QuickAddModal({
                 /{selectedSectionObj.name}
               </span>
             )}
-
-            {/* Badge de Prioridade */}
-            <span
-              className={`text-[11px] font-extrabold px-2.5 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                finalPriority === 'P1'
-                  ? 'bg-red-950/80 text-red-400 border-red-900/60'
-                  : finalPriority === 'P2'
-                  ? 'bg-orange-950/80 text-orange-400 border-orange-900/60'
-                  : finalPriority === 'P3'
-                  ? 'bg-blue-950/80 text-blue-400 border-blue-900/60'
-                  : 'bg-slate-950 text-slate-400 border-slate-800'
-              }`}
-            >
-              <Flag className="w-3 h-3" /> {finalPriority}
-            </span>
           </div>
 
           {/* Seletores manuais rápida */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
             <div className="flex items-center gap-2">
-              {/* Prioridade dropdown */}
-              <select
-                value={finalPriority}
-                onChange={(e) => setOverridePriority(e.target.value)}
-                className="bg-slate-950 text-slate-300 text-xs px-2.5 py-1.5 border border-slate-800 rounded-xl outline-none hover:bg-slate-900 transition-colors"
-              >
-                <option value="P1">🚩 P1 (Urgente)</option>
-                <option value="P2">🚩 P2 (Alta)</option>
-                <option value="P3">🚩 P3 (Média)</option>
-                <option value="P4">🚩 P4 (Baixa)</option>
-              </select>
-
               {/* Lista/Projeto dropdown */}
               <select
                 value={finalListId || ''}

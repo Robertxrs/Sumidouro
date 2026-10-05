@@ -11,29 +11,32 @@ import {
   getTopicMessages,
   sendTopicMessage,
   generateTopicSummary,
-  generateStudyGuide
+  analyzeNoteImage
 } from '@/app/notes/actions'
 import { 
   Plus, 
   Pencil, 
   Trash2, 
-  X,
-  FileText,
-  Folder,
-  MessageSquare,
-  Bot,
-  Send,
-  Sparkles,
-  Headphones,
-  BookOpen,
-  Layers,
-  ArrowLeft
+  X, 
+  FileText, 
+  Folder, 
+  MessageSquare, 
+  Bot, 
+  Send, 
+  Sparkles, 
+  Image as ImageIcon,
+  Layers, 
+  ArrowLeft,
+  Eye,
+  Check
 } from 'lucide-react'
 
 type Note = {
   id: string
   title: string
   content: string | null
+  imageUrl?: string | null
+  imageDescription?: string | null
   groupId: string | null
   createdAt: Date
   updatedAt: Date
@@ -72,6 +75,12 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
   const [isSending, setIsSending] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
+  // Confirmation modal state for Summary
+  const [isSummaryConfirmOpen, setIsSummaryConfirmOpen] = useState(false)
+
+  // Lightbox preview modal for images
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
   // Modal states
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
@@ -83,6 +92,9 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
   const [groupColor, setGroupColor] = useState('bg-blue-500')
   const [noteTitle, setNoteTitle] = useState('')
   const [noteContent, setNoteContent] = useState('')
+  const [noteImageUrl, setNoteImageUrl] = useState<string | null>(null)
+  const [noteImageDesc, setNoteImageDesc] = useState<string | null>(null)
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false)
 
   const activeGroup = groups.find(g => g.id === selectedGroupId) || groups[0]
 
@@ -127,18 +139,14 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
     }
   }
 
-  const handleQuickAction = async (type: 'summary' | 'study') => {
+  const handleConfirmSummary = async () => {
     if (!selectedGroupId || isSending) return
+    setIsSummaryConfirmOpen(false)
     setIsSending(true)
     setActiveTab('chat')
 
     try {
-      let updatedMsgs: any
-      if (type === 'summary') {
-        updatedMsgs = await generateTopicSummary(selectedGroupId)
-      } else {
-        updatedMsgs = await generateStudyGuide(selectedGroupId)
-      }
+      const updatedMsgs = await generateTopicSummary(selectedGroupId)
       if (updatedMsgs) setMessages(updatedMsgs)
     } catch (err) {
       console.error(err)
@@ -174,23 +182,53 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
     }
   }
 
-  // Handlers for Note CRUD
+  // Handlers for Note CRUD with Image support
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string
+      setNoteImageUrl(dataUrl)
+      setNoteImageDesc(null)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleAnalyzeImage = async () => {
+    if (!noteImageUrl) return
+    setIsAnalyzingImage(true)
+    try {
+      const analysis = await analyzeNoteImage(noteTitle || 'Nota com Imagem', noteContent, noteImageUrl)
+      setNoteImageDesc(analysis)
+    } catch (err) {
+      console.error('Erro ao analisar imagem:', err)
+    } finally {
+      setIsAnalyzingImage(false)
+    }
+  }
+
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!noteTitle.trim()) return
-    await createNote(noteTitle, noteContent, selectedGroupId || undefined)
+    await createNote(noteTitle, noteContent, selectedGroupId || undefined, noteImageUrl, noteImageDesc)
     setNoteTitle('')
     setNoteContent('')
+    setNoteImageUrl(null)
+    setNoteImageDesc(null)
     setIsNoteModalOpen(false)
   }
 
   const handleUpdateNote = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingNote || !noteTitle.trim()) return
-    await updateNote(editingNote.id, noteTitle, noteContent)
+    await updateNote(editingNote.id, noteTitle, noteContent, noteImageUrl, noteImageDesc)
     setEditingNote(null)
     setNoteTitle('')
     setNoteContent('')
+    setNoteImageUrl(null)
+    setNoteImageDesc(null)
   }
 
   const handleDeleteNote = async (id: string) => {
@@ -334,30 +372,23 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                     </div>
                   </div>
 
-                  {/* AÇÕES RÁPIDAS COM IA (NOTEBOOKLM) */}
+                  {/* AÇÕES COM IA (BOTÃO ÚNICO DE RESUMO COM CONFIRMAÇÃO) */}
                   <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={() => handleQuickAction('summary')}
-                      className="px-3 py-1.5 bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                      title="Gerar áudio / podcast resumo com IA"
+                      onClick={() => setIsSummaryConfirmOpen(true)}
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-900/30 transition-all active:scale-95"
+                      title="Gerar síntese e resumo inteligente com IA"
                     >
-                      <Headphones className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Resumo de Áudio</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleQuickAction('study')}
-                      className="px-3 py-1.5 bg-blue-950/80 hover:bg-blue-900 text-blue-300 border border-blue-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                      title="Gerar guia de estudos e Q&A"
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Guia de Estudos</span>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Gerar Resumo</span>
                     </button>
 
                     <button
                       onClick={() => {
                         setNoteTitle('')
                         setNoteContent('')
+                        setNoteImageUrl(null)
+                        setNoteImageDesc(null)
                         setIsNoteModalOpen(true)
                       }}
                       className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm ml-auto md:ml-0"
@@ -432,6 +463,8 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                                       setEditingNote(note)
                                       setNoteTitle(note.title)
                                       setNoteContent(note.content || '')
+                                      setNoteImageUrl(note.imageUrl || null)
+                                      setNoteImageDesc(note.imageDescription || null)
                                     }}
                                     className="p-1 text-slate-400 hover:text-white rounded"
                                     title="Editar nota"
@@ -447,15 +480,54 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                                   </button>
                                 </div>
                               </div>
+
+                              {/* Imagem anexada com visualização Lightbox */}
+                              {note.imageUrl && (
+                                <div className="relative my-2 rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group/img">
+                                  <img
+                                    src={note.imageUrl}
+                                    alt={note.title}
+                                    className="w-full h-36 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setPreviewImageUrl(note.imageUrl || null)}
+                                  />
+                                  <button
+                                    onClick={() => setPreviewImageUrl(note.imageUrl || null)}
+                                    className="absolute bottom-2 right-2 p-1.5 bg-slate-950/80 hover:bg-slate-900 text-white rounded-lg opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center gap-1 text-[10px]"
+                                  >
+                                    <Eye className="w-3 h-3" /> Ampliar
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Texto do Conteúdo */}
                               {note.content && (
                                 <p className="text-slate-300 text-xs leading-relaxed line-clamp-5 whitespace-pre-wrap">
                                   {note.content}
                                 </p>
                               )}
+
+                              {/* Contexto da Imagem extraído pela IA */}
+                              {note.imageDescription && (
+                                <div className="mt-2.5 p-2 bg-purple-950/40 border border-purple-900/40 rounded-xl text-[11px] text-purple-200">
+                                  <span className="font-bold flex items-center gap-1 text-purple-400 mb-0.5">
+                                    <Sparkles className="w-3 h-3 text-amber-400" /> IA Contexto Visual:
+                                  </span>
+                                  <p className="line-clamp-3 text-slate-300 text-[10px]">
+                                    {note.imageDescription}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                             <div className="mt-4 pt-2 border-t border-slate-900 flex items-center justify-between text-[10px] text-slate-500">
                               <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
-                              <FileText className="w-3 h-3 text-slate-600" />
+                              <div className="flex items-center gap-1.5">
+                                {note.imageUrl && (
+                                  <span title="Possui imagem anexada">
+                                    <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
+                                  </span>
+                                )}
+                                <FileText className="w-3 h-3 text-slate-600" />
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -633,7 +705,7 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
       {/* MODAL: CRIAR NOTA NO TÓPICO */}
       {isNoteModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-800 text-white">
+          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-800 text-white max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">Adicionar Nova Nota ao Tópico</h3>
               <button onClick={() => setIsNoteModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -645,7 +717,7 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                 <label className="block text-xs font-semibold text-slate-400 mb-1">Título da Nota *</label>
                 <input
                   type="text"
-                  placeholder="Ex: Reunião com equipe, Ideia de arquitetura..."
+                  placeholder="Ex: Reunião com equipe, Diagrama de arquitetura..."
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
                   className="w-full border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white bg-slate-950 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 placeholder-slate-500"
@@ -656,7 +728,7 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1">Conteúdo da Nota</label>
                 <textarea
-                  rows={5}
+                  rows={4}
                   placeholder="Escreva detalhes, pontos importantes, links ou resumos..."
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
@@ -664,7 +736,66 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              {/* Anexar Imagem */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Anexar Imagem (Foto, Diagrama ou Documento)
+                </label>
+                
+                {noteImageUrl ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-2.5 space-y-2">
+                    <img
+                      src={noteImageUrl}
+                      alt="Preview da imagem"
+                      className="max-h-48 w-full object-contain rounded-lg bg-black/40"
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAnalyzeImage}
+                        disabled={isAnalyzingImage}
+                        className="text-[11px] bg-purple-950/80 hover:bg-purple-900 border border-purple-800/60 text-purple-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-colors"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        {isAnalyzingImage ? 'IA Analisando imagem...' : 'Interpretar Imagem com IA'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNoteImageUrl(null)
+                          setNoteImageDesc(null)
+                        }}
+                        className="text-[11px] text-red-400 hover:text-red-300 px-2 py-1"
+                      >
+                        Remover Imagem
+                      </button>
+                    </div>
+
+                    {noteImageDesc && (
+                      <div className="p-2.5 bg-purple-950/40 border border-purple-900/40 rounded-xl text-xs text-slate-300">
+                        <span className="font-bold text-purple-400 flex items-center gap-1 mb-1">
+                          <Sparkles className="w-3 h-3 text-amber-400" /> Contexto Visual da IA:
+                        </span>
+                        <p className="leading-relaxed line-clamp-4 text-slate-200 text-[11px]">{noteImageDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center justify-center gap-2 p-4 bg-slate-950 hover:bg-slate-900 border border-dashed border-slate-800 hover:border-purple-500/60 rounded-xl text-xs text-slate-300 transition-colors">
+                    <ImageIcon className="w-4 h-4 text-purple-400" />
+                    <span>Selecionar imagem do dispositivo...</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageFileChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
                 <button type="button" onClick={() => setIsNoteModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:bg-slate-800 rounded-xl font-medium">
                   Cancelar
                 </button>
@@ -680,7 +811,7 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
       {/* MODAL: EDITAR NOTA */}
       {editingNote && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-800 text-white">
+          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-slate-800 text-white max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">Editar Nota</h3>
               <button onClick={() => setEditingNote(null)} className="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -702,14 +833,73 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1">Conteúdo</label>
                 <textarea
-                  rows={5}
+                  rows={4}
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   className="w-full border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white bg-slate-950 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              {/* Anexar / Editar Imagem */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Imagem Anexada
+                </label>
+                
+                {noteImageUrl ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-2.5 space-y-2">
+                    <img
+                      src={noteImageUrl}
+                      alt="Preview da imagem"
+                      className="max-h-48 w-full object-contain rounded-lg bg-black/40"
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAnalyzeImage}
+                        disabled={isAnalyzingImage}
+                        className="text-[11px] bg-purple-950/80 hover:bg-purple-900 border border-purple-800/60 text-purple-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-colors"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        {isAnalyzingImage ? 'IA Analisando imagem...' : 'Interpretar Imagem com IA'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNoteImageUrl(null)
+                          setNoteImageDesc(null)
+                        }}
+                        className="text-[11px] text-red-400 hover:text-red-300 px-2 py-1"
+                      >
+                        Remover Imagem
+                      </button>
+                    </div>
+
+                    {noteImageDesc && (
+                      <div className="p-2.5 bg-purple-950/40 border border-purple-900/40 rounded-xl text-xs text-slate-300">
+                        <span className="font-bold text-purple-400 flex items-center gap-1 mb-1">
+                          <Sparkles className="w-3 h-3 text-amber-400" /> Contexto Visual da IA:
+                        </span>
+                        <p className="leading-relaxed line-clamp-4 text-slate-200 text-[11px]">{noteImageDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center justify-center gap-2 p-4 bg-slate-950 hover:bg-slate-900 border border-dashed border-slate-800 hover:border-purple-500/60 rounded-xl text-xs text-slate-300 transition-colors">
+                    <ImageIcon className="w-4 h-4 text-purple-400" />
+                    <span>Carregar nova imagem do dispositivo...</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageFileChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
                 <button type="button" onClick={() => setEditingNote(null)} className="px-4 py-2 text-sm text-slate-400 hover:bg-slate-800 rounded-xl font-medium">
                   Cancelar
                 </button>
@@ -718,6 +908,68 @@ export default function NotesView({ groups, standaloneNotes }: NotesViewProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PARA GERAR RESUMO */}
+      {isSummaryConfirmOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-800 text-white space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-950/80 border border-purple-800/60 text-purple-400">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Gerar Resumo com IA</h3>
+                <p className="text-xs text-slate-400">Síntese Inteligente de Notas e Imagens</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-300">
+              Deseja que a IA analise e consolide todas as anotações, dados e imagens vinculadas ao tópico <strong className="text-white">"{activeGroup?.name}"</strong>?
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsSummaryConfirmOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSummary}
+                className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-purple-600/30 transition-all flex items-center gap-1.5 active:scale-95"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                Confirmar e Gerar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LIGHTBOX PREVIEW DA IMAGEM */}
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in cursor-zoom-out"
+          onClick={() => setPreviewImageUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImageUrl(null)}
+              className="absolute top-4 right-4 p-2 bg-slate-950/80 text-white rounded-full hover:bg-slate-800 z-10"
+              title="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={previewImageUrl}
+              alt="Visualização ampliada"
+              className="max-h-[80vh] w-auto object-contain rounded-xl mx-auto"
+            />
           </div>
         </div>
       )}
